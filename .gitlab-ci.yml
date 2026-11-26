@@ -1,0 +1,74 @@
+include:
+  - component: $CI_SERVER_FQDN/fsdev/common/ci-cd-components/build-and-test/node/build@1
+    inputs:
+      stage_install: install_stage
+      stage_checks: lint
+      stage_build: build
+      node_version: 22
+      depends_on_build: ["type_check_"]
+
+  - component: $CI_SERVER_FQDN/fsdev/common/ci-cd-components/build-and-test/node/typeCheck@1
+    inputs:
+      stage: lint
+      node_version: 22
+      depends_on: ["install_"]
+
+  - component: $CI_SERVER_FQDN/fsdev/common/ci-cd-components/code-intelligence/node@3
+    inputs:
+      stage: convenience
+      depends_on: ["install_", "build_"]
+
+  - component: $CI_SERVER_FQDN/fsdev/common/ci-cd-components/sonarqube/node@3
+    inputs:
+      stage: analysis
+      sonar_project_key: $SONAR_PROJECTKEY
+      sonar_host_url: $SONAR_HOST_URL
+      sonar_token: $SONAR_TOKEN
+      depends_on: ["build_"]
+
+  - component: $CI_SERVER_FQDN/fsdev/common/ci-cd-components/prerelease-version-check/node@1
+    inputs:
+      stage: analysis
+      node_version: 22
+      depends_on: ["install_"]
+
+  - component: $CI_SERVER_FQDN/fsdev/common/ci-cd-components/convention-checks/commit-checks@1
+    inputs:
+      stage: analysis
+      depends_on: []
+
+  - component: $CI_SERVER_FQDN/fsdev/common/ci-cd-components/publish/npm@2
+    inputs:
+      stage: publish
+      npm_token: $NPM_TOKEN
+      depends_on: ["install_", "build_"]
+
+  - component: $CI_SERVER_FQDN/fsdev/common/ci-cd-components/publish/release@2
+    inputs:
+      release_files:
+        - "dist/dist.zip"
+      stage: publish
+      depends_on: ["build_"]
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+before_script:
+  - git submodule sync
+  - git submodule update --init --recursive
+
+stages:
+  - install_stage
+  - lint
+  - build
+  - analysis
+  - convenience
+  - publish

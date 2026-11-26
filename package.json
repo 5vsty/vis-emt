@@ -1,0 +1,59 @@
+{
+  "name": "@fsdev/emt",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development vite",
+    "build": "cross-env NODE_ENV=production run-p type-check \"build-only {@}\" --",
+    "preview": "cross-env NODE_ENV=production vite preview",
+    "build-only": "cross-env NODE_ENV=production vite build",
+    "watch": "cross-env NODE_ENV=development vite build --watch",
+    "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "checkCodeStyle": "prettier -c src/",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "@fsdev/button": "1.0.0-implementfeedback",
+    "@fsdev/checkbox": "1.0.0-implementfeedback-v3",
+    "@fsdev/eventbus": "3.0.0",
+    "@fsdev/input": "1.0.0-implementfeedback-v4",
+    "@fsdev/overlay": "1.0.0-implementfeedback-v3",
+    "@fsdev/pluginapi": "2.1.0",
+    "@fsdev/table": "7.2.0-implementfeedback",
+    "element-plus": "2.14.8",
+    "quasar": "2.16.4",
+    "uuid": "^9.0.1",
+    "vue-debounce": "^4.0.0",
+    "vuex": "4.0.2"
+  },
+  "peerDependencies": {
+    "vue": "3.2"
+  },
+  "devDependencies": {
+    "@rushstack/eslint-patch": "^1.3.3",
+    "@tsconfig/node22": "^22.0.0",
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/eslint-config-prettier": "^8.0.0",
+    "@vue/eslint-config-typescript": "^12.0.0",
+    "@vue/tsconfig": "^0.4.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.49.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "npm-run-all2": "^6.0.6",
+    "prettier": "^3.0.3",
+    "typescript": "~5.2.0",
+    "vite": "^6.3.3",
+    "vite-plugin-css-injected-by-js": "^3.3.0",
+    "vue-tsc": "^2.2.10"
+  },
+  "exports": {
+    "default": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">= 22.0.0",
+    "npm": ">= 10.9.0"
+  }
+}
