@@ -99,5 +99,6 @@
   "EMT_REASON_OtherCodeProtected": "Der Code \"Sonstiges\" ist geschützt.",
   "EMT_REASON_Unavailable": "Der Dienst ist nicht erreichbar. Bitte später erneut versuchen.",
   "EMT_REASON_Internal": "Es ist ein interner Fehler aufgetreten.",
-  "EMT_NOTIFICATION_NEW_ERROR": "Neuer Fehler %ErrorNumber%: %CodeTitle_de% (%LocationPath%)"
+  "EMT_NOTIFICATION_NEW_ERROR": "Neuer Fehler %ErrorNumber%: %CodeTitle_de% (%LocationPath%)",
+  "EMT_NOTIFICATION_INSTRUCTIONS": "Öffnen Sie die Fehlerliste von EMT, um den Fehler anzunehmen und zu bearbeiten."
 }
