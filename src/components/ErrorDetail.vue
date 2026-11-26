@@ -80,13 +80,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch, type ComputedRef } from 'vue';
 import { FlexButton } from '@fsdev/button';
-import { EMT_PERMISSIONS, FINAL_STATUSES, MESSAGE_ID, SEVERITIES } from '@/constants';
+import { EMT_PERMISSIONS, FINAL_STATUSES, MESSAGE_ID, SEVERITIES, STORE_KEY } from '@/constants';
+import { mapGetters } from '@/stores/storeLib';
 import { useHasPermission } from '@/composables/useHasAccess';
 import { sendRequest } from '@/utils/requests';
 import { formatDateTime, useTranslate } from '@/utils/format';
-import type { IFuncResponseChangeError, IFuncResponseGetAssignableUsers, IFuncResponseGetErrorDetail } from '@/messages/backendToFrontend';
+import type { IFuncErrorChanged, IFuncResponseChangeError, IFuncResponseGetAssignableUsers, IFuncResponseGetErrorDetail } from '@/messages/backendToFrontend';
 import type { AssignableUser, ErrorAction, ErrorEvent, ErrorSummary, Severity } from '@/types';
 
 /** Opened as adaptive window from the error list and the report page; the props are the window's Options. */
@@ -101,6 +102,9 @@ const props = withDefaults(
 
 const translate = useTranslate();
 const canManage = useHasPermission(EMT_PERMISSIONS.PERMISSIONS.MANAGE_ERRORS);
+
+/** The last push about a changed error (somebody else changed it, or an action of this window came back). */
+const { getLastErrorChanged } = mapGetters<{ getLastErrorChanged: ComputedRef<IFuncErrorChanged | null> }>(STORE_KEY);
 
 const error = ref<ErrorSummary>();
 const events = ref<ErrorEvent[]>([]);
@@ -139,9 +143,12 @@ async function load() {
   }
 }
 
-/** Applies the shared change response; on a version conflict the detail is reloaded. */
+/** Applies the shared change response at once, then reloads the detail (timeline, allowed actions); on a version conflict it is only reloaded. */
 async function applyChange(response: IFuncResponseChangeError) {
   if (response.Successful === true) {
+    if (response.Error !== undefined && response.Error.ErrorId === props.errorId) {
+      error.value = response.Error;
+    }
     await load();
     return;
   }
@@ -245,6 +252,13 @@ async function addNote() {
 }
 
 onMounted(load);
+
+// A change of the shown error by somebody else (assignee, status, note) shows up without closing and opening the window.
+watch(getLastErrorChanged, (change) => {
+  if (change !== null && change.ErrorId === props.errorId) {
+    void load();
+  }
+});
 watch(
   () => props.errorId,
   () => {

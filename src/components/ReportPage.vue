@@ -26,10 +26,10 @@
       <ErrorCodeGrid v-else :codes="codes" :status-by-code="statusByCode" :status-labels="statusLabels" :busy-code-id="busyCodeId" :busy-label="$translate('EMT_REPORT_SENDING')" @select="onSelect" />
     </template>
 
-    <h6 class="emt-my-errors pb-05">{{ $translate('EMT_MY_ERRORS') }}</h6>
+    <h6 v-if="!embedded" class="emt-my-errors pb-05">{{ $translate('EMT_MY_ERRORS') }}</h6>
 
     <!-- The backend gives every reporter an own table (AMF tables cannot filter rows per user); its model id comes with funcGetMyErrors. -->
-    <div class="emt-table-scroll">
+    <div v-if="!embedded" class="emt-table-scroll">
       <Table
         v-if="tableModelId !== ''"
         class="flexlog-table"
@@ -58,7 +58,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch, type ComputedRef } fr
 import { v4 as uuidv4 } from 'uuid';
 import { FlexButton } from '@fsdev/button';
 import Table, { type Column, type DefaultSorting } from '@fsdev/table';
-import { MESSAGE_ID } from '@/constants';
+import { MESSAGE_ID, STORE_KEY } from '@/constants';
 import { mapGetters } from '@/stores/storeLib';
 import { sendRequest } from '@/utils/requests';
 import { useTranslate } from '@/utils/format';
@@ -73,11 +73,17 @@ const REFRESH_INTERVAL_MS = 5000;
 /** How long a result text stays on the screen. */
 const NOTICE_MS = 8000;
 
+/** `embedded`: shown in the report window next to another screen, without the table of the own errors. */
+withDefaults(defineProps<{ embedded?: boolean }>(), { embedded: false });
+
 const translate = useTranslate();
 
 const { getObject } = mapGetters<{
   getObject: ComputedRef<(objectId: string) => Record<string, unknown>>;
 }>('objectStore');
+
+/** Counts the pushes of the backend about changed errors; the tiles are read again at once when it changes. */
+const { getErrorsVersion } = mapGetters<{ getErrorsVersion: ComputedRef<number> }>(STORE_KEY);
 
 type LoadState = 'loading' | 'ready' | 'failed';
 
@@ -214,6 +220,12 @@ function selectRow(objectId: string) {
     openErrorDetail(objectId, true);
   }
 }
+
+watch(getErrorsVersion, () => {
+  if (loadState.value === 'ready') {
+    void loadMyErrors();
+  }
+});
 
 watch(locationId, (value) => {
   if (value !== '') {

@@ -32,6 +32,8 @@ export const MENU = {
   /** Settings > EMT: parent entry and the error code catalog below it. */
   SETTINGS: '6448bd9f-3466-4099-86ca-c82e4907467f',
   CATALOG: '6bb43e4d-93be-4ed0-bc9d-4ae2402a0e41',
+  /** System tray entry "Report error", on every screen. */
+  REPORT_TRAY: '917e1c7c-93ec-4796-a667-9c59b9cef7c6',
 };
 
 export const COMPONENT = {
@@ -40,6 +42,8 @@ export const COMPONENT = {
   CATALOG: '0ac5368f-d24c-4cc9-b356-f65572ae8f56',
   ERROR_DETAIL: 'f3485f7c-8f57-4353-bd12-9eb7c0bd8469',
   CODE_EDITOR: 'f918fb68-053b-4c32-80bc-9c394c14679c',
+  /** The report page in a window next to the current screen (opened from the system tray). */
+  REPORT_WINDOW: '5d55aa2e-f14b-44fc-9455-eff26c34cec0',
 };
 
 export const ADAPTIVE_WINDOW = {
@@ -47,6 +51,8 @@ export const ADAPTIVE_WINDOW = {
   CODE_EDITOR: 'eebc5fe8-8bd5-40e5-94c5-9a32b9abedd2',
   /** Detail of one error (status actions, assignee, notes), opened from the error list and the report page. */
   ERROR_DETAIL: 'b6c8cd5d-4c1f-4fdb-918c-e446060d4882',
+  /** The error code tiles, opened from the system tray on any screen. */
+  REPORT: 'c174f22a-7315-4c57-88ab-85b857eff860',
 };
 
 export const WEBAPPLICATION_EVENTS = {
