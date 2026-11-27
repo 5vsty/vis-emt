@@ -1,6 +1,7 @@
 import { store } from '@fsdev/pluginapi';
 import { STORE_KEY } from './constants';
-import { isFuncErrorChanged, isFuncErrorCodesChanged, type backendToFrontendMessage } from './messages/backendToFrontend';
+import { isFuncErrorChanged, isFuncErrorCodesChanged, isFuncOpenError, type backendToFrontendMessage } from './messages/backendToFrontend';
+import { openErrorFromNotification } from './utils/errorTable';
 import { resolveRequest } from './utils/requests';
 
 export const MESSAGE_ID = {
@@ -21,6 +22,8 @@ export function handleMessageReceived(msgJson: { ID?: string }[]) {
 
     if (isFuncErrorChanged(msg)) {
       store.commit(`${STORE_KEY}/errorChanged`, msg);
+    } else if (isFuncOpenError(msg)) {
+      openErrorFromNotification(msg.ErrorId);
     } else if (isFuncErrorCodesChanged(msg)) {
       store.commit(`${STORE_KEY}/codesChanged`);
     } else {

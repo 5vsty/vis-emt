@@ -5,7 +5,8 @@
         <button
           type="button"
           class="emt-tile"
-          :class="[statusByCode.has(code.ErrorCodeId) ? `emt-tile--${(statusByCode.get(code.ErrorCodeId) ?? '').toLowerCase()}` : '', { 'emt-tile--busy': busyCodeId === code.ErrorCodeId }]"
+          :class="{ 'emt-tile--busy': busyCodeId === code.ErrorCodeId }"
+          :style="statusByCode.has(code.ErrorCodeId) ? statusColor(statusByCode.get(code.ErrorCodeId) ?? '') : undefined"
           :disabled="busyCodeId !== null"
           :aria-busy="busyCodeId === code.ErrorCodeId"
           @click="emit('select', code)"
@@ -22,6 +23,7 @@
 
 <script setup lang="ts">
 import type { ErrorCodeOption } from '@/types';
+import { statusColor } from '@/utils/statusTone';
 
 defineProps<{
   codes: ErrorCodeOption[];
@@ -126,27 +128,7 @@ const emit = defineEmits<{
   cursor: default;
 }
 
-/* One colour per step of the handling; dark text on every colour keeps the contrast above 4.5:1. */
-.emt-tile--new {
-  background: #ffd166;
-  color: #1a1a1a;
-}
-
-.emt-tile--acknowledged {
-  background: #8ecbff;
-  color: #1a1a1a;
-}
-
-.emt-tile--in_progress {
-  background: var(--color-success, #83bb26);
-  color: #1a1a1a;
-}
-
-.emt-tile--resolved {
-  background: #d9d9d9;
-  color: #1a1a1a;
-}
-
+/* The colour of a tile with a status comes from the module config (inline style, utils/statusTone.ts), the same as the status tags of the tables. */
 .emt-tile--busy {
   opacity: 0.6;
 }

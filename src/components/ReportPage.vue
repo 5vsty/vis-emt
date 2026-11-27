@@ -1,8 +1,5 @@
 <template>
   <div class="emt-page">
-    <h5 class="title pb-05">{{ $translate('EMT_MENU_REPORT') }}</h5>
-    <p class="emt-hint">{{ $translate('EMT_REPORT_HINT') }}</p>
-
     <!-- Always rendered so that a screen reader announces the text when it changes. -->
     <div class="emt-notice" :class="notice ? `emt-notice--${notice.kind}` : ''" role="status" aria-live="polite">{{ notice?.text ?? '' }}</div>
 
@@ -10,7 +7,7 @@
 
     <div v-else-if="loadState === 'failed'" class="emt-state" role="alert">
       <p>{{ $translate('EMT_REASON_Unavailable') }}</p>
-      <FlexButton type="Primary" size="M" :text="$translate('EMT_RETRY')" :handle-click="loadAll" />
+      <FlexButton type="Primary" size="M" :icon="false" :text="$translate('EMT_RETRY')" :handle-click="loadAll" />
     </div>
 
     <template v-else>
@@ -45,7 +42,8 @@
       >
         <template v-for="slot of slots" :key="slot.keySelector" v-slot:[slot.keySelector]="{ objectId }">
           <div class="table-column">
-            <span>{{ errorCellText(getObject(objectId)?.[slot.keySelector], slot.keySelector, translate) }}</span>
+            <StatusTag v-if="slot.keySelector === 'Status' && getObject(objectId)?.Status" :status="String(getObject(objectId)?.Status)" :label="errorCellText(getObject(objectId)?.Status, 'Status', translate)" />
+          <span v-else>{{ errorCellText(getObject(objectId)?.[slot.keySelector], slot.keySelector, translate) }}</span>
           </div>
         </template>
       </Table>
@@ -62,7 +60,8 @@ import { MESSAGE_ID, STORE_KEY } from '@/constants';
 import { mapGetters } from '@/stores/storeLib';
 import { sendRequest } from '@/utils/requests';
 import { useTranslate } from '@/utils/format';
-import { closeRightWindows, errorCellText, openErrorDetail } from '@/utils/errorTable';
+import StatusTag from './StatusTag.vue';
+import { closeRightWindows, errorCellText, errorColumnFilter, openErrorDetail, openErrorFromNotification } from '@/utils/errorTable';
 import { fillPlaceholders, gridCodes, latestStatusByCode, loadStoredLocation, openErrorsByCode, storeLocation, TILE_STATUSES } from '@/utils/errorCodeGrid';
 import type { IFuncResponseGetMyErrors, IFuncResponseGetReportFormData, IFuncResponseSubmitError } from '@/messages/backendToFrontend';
 import type { ErrorCodeOption, ErrorSummary, LocationOption } from '@/types';
@@ -109,15 +108,19 @@ const statusLabels = computed(() => Object.fromEntries(TILE_STATUSES.map((status
 
 const slots = [{ keySelector: 'ErrorNumber' }, { keySelector: 'ReportedAt' }, { keySelector: 'ErrorCode' }, { keySelector: 'CodeTitle' }, { keySelector: 'LocationPath' }, { keySelector: 'Severity' }, { keySelector: 'Status' }];
 
-const columns = ref<Column[]>([
-  { name: 'EMT_COL_ERROR_NUMBER', slotName: 'ErrorNumber', sorting: { keySelector: 'Number' } },
-  { name: 'EMT_COL_REPORTED_AT', slotName: 'ReportedAt', sorting: { keySelector: 'ReportedAt' } },
-  { name: 'EMT_COL_ERROR_CODE', slotName: 'ErrorCode', sorting: { keySelector: 'ErrorCode' } },
-  { name: 'EMT_COL_CODE_TITLE', slotName: 'CodeTitle', sorting: { keySelector: 'CodeTitle' } },
-  { name: 'EMT_COL_LOCATION', slotName: 'LocationPath', sorting: { keySelector: 'LocationPath' } },
-  { name: 'EMT_COL_SEVERITY', slotName: 'Severity', sorting: { keySelector: 'Severity' } },
-  { name: 'EMT_COL_STATUS', slotName: 'Status', sorting: { keySelector: 'Status' } },
-] as Column[]);
+/** Every column has a filter, like in the error list. */
+const columns = computed(
+  () =>
+    [
+      { name: 'EMT_COL_ERROR_NUMBER', slotName: 'ErrorNumber', sorting: { keySelector: 'Number' }, filter: errorColumnFilter('ErrorNumber', translate) },
+      { name: 'EMT_COL_REPORTED_AT', slotName: 'ReportedAt', sorting: { keySelector: 'ReportedAt' }, filter: errorColumnFilter('ReportedAt', translate) },
+      { name: 'EMT_COL_ERROR_CODE', slotName: 'ErrorCode', sorting: { keySelector: 'ErrorCode' }, filter: errorColumnFilter('ErrorCode', translate) },
+      { name: 'EMT_COL_CODE_TITLE', slotName: 'CodeTitle', sorting: { keySelector: 'CodeTitle' }, filter: errorColumnFilter('CodeTitle', translate) },
+      { name: 'EMT_COL_LOCATION', slotName: 'LocationPath', sorting: { keySelector: 'LocationPath' }, filter: errorColumnFilter('LocationPath', translate) },
+      { name: 'EMT_COL_SEVERITY', slotName: 'Severity', sorting: { keySelector: 'Severity' }, filter: errorColumnFilter('Severity', translate) },
+      { name: 'EMT_COL_STATUS', slotName: 'Status', sorting: { keySelector: 'Status' }, filter: errorColumnFilter('Status', translate) },
+    ] as Column[],
+);
 
 const defaultSorting: DefaultSorting = {
   columnName: 'EMT_COL_REPORTED_AT',
@@ -174,9 +177,10 @@ async function onSelect(code: ErrorCodeOption) {
     return;
   }
 
+  // the problem is already reported: a tap opens the newest error of it, to look at it again, instead of saying "already reported"
   const open = openByCode.value.get(code.ErrorCodeId);
   if (open !== undefined) {
-    showNotice('info', fillPlaceholders(translate('EMT_REPORT_ALREADY'), { ErrorNumber: open.ErrorNumber }));
+    openErrorFromNotification(open.ErrorId);
     return;
   }
 
@@ -255,11 +259,6 @@ function onVisibilityChange() {
 <style scoped>
 .emt-page {
   padding: 1rem;
-}
-
-.emt-hint {
-  margin: 0 0 0.75rem;
-  opacity: 0.75;
 }
 
 .emt-notice {

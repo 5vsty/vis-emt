@@ -1,12 +1,5 @@
 <template>
   <div class="emt-page">
-    <h5 class="title pb-05">{{ $translate('EMT_MENU_LIST') }}</h5>
-
-    <section class="emt-overview" :aria-label="$translate('EMT_OVERVIEW')">
-      <h6>{{ $translate('EMT_OVERVIEW') }}</h6>
-      <p class="emt-placeholder">{{ $translate('EMT_OVERVIEW_PLACEHOLDER') }}</p>
-    </section>
-
     <Table
       class="flexlog-table"
       :columns="columns"
@@ -22,7 +15,8 @@
     >
       <template v-for="slot of slots" :key="slot.keySelector" v-slot:[slot.keySelector]="{ objectId }">
         <div class="table-column">
-          <span>{{ errorCellText(getObject(objectId)?.[slot.keySelector], slot.keySelector, translate) }}</span>
+          <StatusTag v-if="slot.keySelector === 'Status' && getObject(objectId)?.Status" :status="String(getObject(objectId)?.Status)" :label="errorCellText(getObject(objectId)?.Status, 'Status', translate)" />
+          <span v-else>{{ errorCellText(getObject(objectId)?.[slot.keySelector], slot.keySelector, translate) }}</span>
         </div>
       </template>
 
@@ -37,13 +31,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type ComputedRef } from 'vue';
+import { computed, type ComputedRef } from 'vue';
 import { FlexButton } from '@fsdev/button';
 import Table, { type Column, type DefaultFilter, type DefaultSorting } from '@fsdev/table';
 import { OPEN_STATUSES, STATUSES, TABLES } from '@/constants';
 import { mapGetters } from '@/stores/storeLib';
 import { useTranslate } from '@/utils/format';
-import { closeRightWindows, errorCellText, openErrorDetail } from '@/utils/errorTable';
+import StatusTag from './StatusTag.vue';
+import { closeRightWindows, errorCellText, errorColumnFilter, openErrorDetail } from '@/utils/errorTable';
 import { confirmDeleteError } from '@/utils/confirmDelete';
 
 const translate = useTranslate();
@@ -65,27 +60,35 @@ const slots = [
   { keySelector: 'AssigneeName' },
 ];
 
-const columns = ref<Column[]>([
-  { name: 'EMT_COL_ERROR_NUMBER', slotName: 'ErrorNumber', sorting: { keySelector: 'Number' } },
-  { name: 'EMT_COL_REPORTED_AT', slotName: 'ReportedAt', sorting: { keySelector: 'ReportedAt' } },
-  { name: 'EMT_COL_LOCATION', slotName: 'LocationPath', sorting: { keySelector: 'LocationPath' } },
-  { name: 'EMT_COL_ERROR_CODE', slotName: 'ErrorCode', sorting: { keySelector: 'ErrorCode' } },
-  { name: 'EMT_COL_CODE_TITLE', slotName: 'CodeTitle', sorting: { keySelector: 'CodeTitle' } },
-  { name: 'EMT_COL_SEVERITY', slotName: 'Severity', sorting: { keySelector: 'Severity' } },
-  { name: 'EMT_COL_STATUS', slotName: 'Status', sorting: { keySelector: 'Status' }, filter: { type: 'Multiselect', keySelector: 'Status', values: [...STATUSES] } },
-  { name: 'EMT_COL_REPORTER', slotName: 'ReporterName', sorting: { keySelector: 'ReporterName' } },
-  { name: 'EMT_COL_ASSIGNEE', slotName: 'AssigneeName', sorting: { keySelector: 'AssigneeName' } },
-  { name: '', slotName: 'Button_Column', sorting: false },
-] as Column[]);
+/** Every column has a filter; the key selector of the filter is the column of the row (the sorting of the error number uses the numeric one). */
+const columns = computed(
+  () =>
+    [
+      { name: 'EMT_COL_ERROR_NUMBER', slotName: 'ErrorNumber', sorting: { keySelector: 'Number' }, filter: errorColumnFilter('ErrorNumber', translate) },
+      { name: 'EMT_COL_REPORTED_AT', slotName: 'ReportedAt', sorting: { keySelector: 'ReportedAt' }, filter: errorColumnFilter('ReportedAt', translate) },
+      { name: 'EMT_COL_LOCATION', slotName: 'LocationPath', sorting: { keySelector: 'LocationPath' }, filter: errorColumnFilter('LocationPath', translate) },
+      { name: 'EMT_COL_ERROR_CODE', slotName: 'ErrorCode', sorting: { keySelector: 'ErrorCode' }, filter: errorColumnFilter('ErrorCode', translate) },
+      { name: 'EMT_COL_CODE_TITLE', slotName: 'CodeTitle', sorting: { keySelector: 'CodeTitle' }, filter: errorColumnFilter('CodeTitle', translate) },
+      { name: 'EMT_COL_SEVERITY', slotName: 'Severity', sorting: { keySelector: 'Severity' }, filter: errorColumnFilter('Severity', translate) },
+      { name: 'EMT_COL_STATUS', slotName: 'Status', sorting: { keySelector: 'Status' }, filter: errorColumnFilter('Status', translate) },
+      { name: 'EMT_COL_REPORTER', slotName: 'ReporterName', sorting: { keySelector: 'ReporterName' }, filter: errorColumnFilter('ReporterName', translate) },
+      { name: 'EMT_COL_ASSIGNEE', slotName: 'AssigneeName', sorting: { keySelector: 'AssigneeName' }, filter: errorColumnFilter('AssigneeName', translate) },
+      { name: '', slotName: 'Button_Column', sorting: false },
+    ] as Column[],
+);
 
 const defaultSorting: DefaultSorting = {
   columnName: 'EMT_COL_REPORTED_AT',
   direction: 'Descending',
 };
 
-/** Only unfinished errors are shown at first (FR-18). */
+/**
+ * Only unfinished errors are shown at first (FR-18). The column name is the NAME of the column (not its key selector): the table sets the value
+ * into the filter of that column, where the user can change it. With the key selector the table would send it as a second, fixed filter of the
+ * status next to the one of the user, and the query would fail.
+ */
 const defaultFilter: DefaultFilter = {
-  columnName: 'Status',
+  columnName: 'EMT_COL_STATUS',
   values: [...OPEN_STATUSES],
 };
 
@@ -116,14 +119,6 @@ function deleteHandler(objectId: string) {
 <style scoped>
 .emt-page {
   padding: 1rem;
-}
-.emt-overview {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border: 1px solid rgba(128, 128, 128, 0.3);
-}
-.emt-placeholder {
-  opacity: 0.7;
 }
 .flexlog-table :deep(.table-header .header-row) {
   gap: 8px;

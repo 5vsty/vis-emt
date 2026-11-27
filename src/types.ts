@@ -7,6 +7,8 @@ export interface ModuleConfig {
   ModuleInstanceNameTranslationKey?: string;
   Active: boolean;
   TranslationsPath?: string;
+  /** Colour per status: the name of a tone or own colours (utils/statusTone.ts). */
+  StatusColors?: Record<string, string | { Background?: string; Text?: string }>;
 }
 
 export type HasAccessFn = (type: string, moduleId: string, scopeId: string, permission: string) => boolean;

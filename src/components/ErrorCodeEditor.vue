@@ -5,18 +5,10 @@
     </div>
 
     <form @submit.prevent="save">
-      <div class="emt-field">
-        <FlexInput
-          control-type="input"
-          type="text"
-          :model-value="form.Code"
-          :placeholder="$translate('EMT_COL_CODE')"
-          :is-required="true"
-          :is-disabled="busy"
-          :invalid="fieldError('Code') !== ''"
-          :error-text="fieldError('Code')"
-          @update:model-value="setField('Code', $event)"
-        />
+      <!-- The code is given by the backend (IdManager) when the error code is created and never changes after that. -->
+      <div v-if="isNew" class="emt-field emt-code-hint" role="note">{{ $translate('EMT_CODE_GENERATED') }}</div>
+      <div v-else class="emt-field">
+        <FlexInput control-type="input" type="text" :model-value="form.Code" :placeholder="$translate('EMT_COL_CODE')" :is-disabled="true" />
       </div>
 
       <div class="emt-field">
@@ -57,9 +49,9 @@
       </div>
 
       <div class="emt-actions">
-        <FlexButton type="Primary" size="M" :text="$translate('EMT_SAVE')" :state="busy || !fullLoaded ? 'Disabled' : 'Default'" :handle-click="save" />
-        <FlexButton v-if="canDelete" type="Secondary" size="M" :text="$translate('EMT_DELETE')" :state="busy ? 'Disabled' : 'Default'" :handle-click="remove" />
-        <FlexButton type="Secondary" size="M" :text="$translate('EMT_CANCEL')" :handle-click="close" />
+        <FlexButton type="Primary" size="M" :icon="false" :text="$translate('EMT_SAVE')" :state="busy || !fullLoaded ? 'Disabled' : 'Default'" :handle-click="save" />
+        <FlexButton v-if="canDelete" type="Secondary" size="M" :icon="false" :text="$translate('EMT_DELETE')" :state="busy ? 'Disabled' : 'Default'" :handle-click="remove" />
+        <FlexButton type="Secondary" size="M" :icon="false" :text="$translate('EMT_CANCEL')" :handle-click="close" />
       </div>
     </form>
   </section>
@@ -218,9 +210,6 @@ async function save() {
   validationErrors.value = [];
 
   const missing: ValidationError[] = [];
-  if (form.Code.trim() === '') {
-    missing.push({ Field: 'Code', MessageKey: 'EMT_VALIDATION_REQUIRED' });
-  }
   if (form.Title.trim() === '') {
     missing.push({ Field: 'Title', MessageKey: 'EMT_VALIDATION_REQUIRED' });
   }
@@ -235,6 +224,7 @@ async function save() {
     funcSaveErrorCode: '',
     ErrorCodeId: isNew.value ? null : (props.errorCodeId as string),
     ExpectedVersion: errorCode.value?.Version ?? null,
+    // ignored by the backend: a new error code gets its code from the IdManager, an existing one keeps its code
     Code: form.Code.trim(),
     Title: form.Title.trim(),
     Description: form.Description.trim(),
@@ -311,6 +301,10 @@ watch(
   display: flex;
   flex-direction: column;
   margin-bottom: 0.75rem;
+}
+
+.emt-code-hint {
+  opacity: 0.75;
 }
 .emt-actions {
   display: flex;
