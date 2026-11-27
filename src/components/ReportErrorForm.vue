@@ -29,13 +29,13 @@
         </div>
 
         <div class="emt-actions">
-          <FlexButton type="Primary" size="M" :text="$translate('EMT_SUBMIT')" :state="submitting ? 'Disabled' : 'Default'" :handle-click="submit" />
-          <FlexButton type="Secondary" size="M" :text="confirmingClose ? $translate('EMT_DISCARD') : $translate('EMT_CANCEL')" :handle-click="requestClose" />
+          <FlexButton type="Primary" size="M" :icon="false" :text="$translate('EMT_SUBMIT')" :state="submitting ? 'Disabled' : 'Default'" :handle-click="submit" />
+          <FlexButton type="Secondary" size="M" :icon="false" :text="confirmingClose ? $translate('EMT_DISCARD') : $translate('EMT_CANCEL')" :handle-click="requestClose" />
         </div>
       </form>
 
       <div v-if="loading || loadFailed" class="emt-actions">
-        <FlexButton type="Secondary" size="M" :text="$translate('EMT_CLOSE')" :handle-click="() => emit('close')" />
+        <FlexButton type="Secondary" size="M" :icon="false" :text="$translate('EMT_CLOSE')" :handle-click="() => emit('close')" />
       </div>
     </div>
   </div>

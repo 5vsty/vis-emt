@@ -14,6 +14,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@fsdev/box": "1.0.1-implementfeedback-1029",
     "@fsdev/button": "1.0.0-implementfeedback",
     "@fsdev/checkbox": "1.0.0-implementfeedback-v3",
     "@fsdev/eventbus": "3.0.0",

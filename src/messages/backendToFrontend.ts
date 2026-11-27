@@ -77,6 +77,13 @@ export interface IFuncErrorChanged {
   Error?: ErrorSummary;
 }
 
+/** The "Open" button of a notification: open the detail of the error (07 addendum). */
+export interface IFuncOpenError {
+  ID: string;
+  funcOpenError: unknown;
+  ErrorId: string;
+}
+
 export interface IFuncErrorCodesChanged {
   ID: string;
   funcErrorCodesChanged: unknown;
@@ -94,10 +101,15 @@ export type backendToFrontendMessage =
   | IFuncResponseDeleteErrorCode
   | IFuncResponseDeleteError
   | IFuncErrorChanged
+  | IFuncOpenError
   | IFuncErrorCodesChanged;
 
 export function isFuncErrorChanged(msg: backendToFrontendMessage): msg is IFuncErrorChanged {
   return (msg as IFuncErrorChanged).funcErrorChanged !== undefined;
+}
+
+export function isFuncOpenError(msg: backendToFrontendMessage): msg is IFuncOpenError {
+  return (msg as IFuncOpenError).funcOpenError !== undefined;
 }
 
 export function isFuncErrorCodesChanged(msg: backendToFrontendMessage): msg is IFuncErrorCodesChanged {

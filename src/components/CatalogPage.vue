@@ -35,11 +35,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, type ComputedRef } from 'vue';
+import { computed, type ComputedRef } from 'vue';
 import { FlexButton } from '@fsdev/button';
 import Table, { type Column, type DefaultSorting } from '@fsdev/table';
 import { getEventBus } from '@fsdev/eventbus/eventBus.js';
-import { ADAPTIVE_WINDOW, TABLES, WEBAPPLICATION_EVENTS } from '@/constants';
+import { ADAPTIVE_WINDOW, SEVERITIES, TABLES, WEBAPPLICATION_EVENTS } from '@/constants';
 import { mapGetters } from '@/stores/storeLib';
 import { useTranslate } from '@/utils/format';
 import { confirmDeleteErrorCode } from '@/utils/confirmDelete';
@@ -52,15 +52,29 @@ const { getObject } = mapGetters<{
 
 const slots = [{ keySelector: 'Code' }, { keySelector: 'Title' }, { keySelector: 'Group' }, { keySelector: 'DefaultSeverity' }, { keySelector: 'Active' }, { keySelector: 'IsUsed' }];
 
-const columns = ref<Column[]>([
-  { name: 'EMT_COL_CODE', slotName: 'Code', sorting: { keySelector: 'Code' } },
-  { name: 'EMT_COL_TITLE', slotName: 'Title', sorting: { keySelector: 'Title' } },
-  { name: 'EMT_COL_GROUP', slotName: 'Group', sorting: { keySelector: 'Group' } },
-  { name: 'EMT_COL_SEVERITY', slotName: 'DefaultSeverity', sorting: { keySelector: 'DefaultSeverity' } },
-  { name: 'EMT_COL_ACTIVE', slotName: 'Active', sorting: { keySelector: 'Active' } },
-  { name: 'EMT_COL_IS_USED', slotName: 'IsUsed', sorting: { keySelector: 'IsUsed' } },
-  { name: '', slotName: 'Button_Column', sorting: false },
-] as Column[]);
+/** Every column has a filter; a yes/no column is offered as "true"/"false" with the translated Yes / No. */
+const yesNo = () => [
+  { value: 'true', label: translate('EMT_YES') },
+  { value: 'false', label: translate('EMT_NO') },
+];
+
+const columns = computed(
+  () =>
+    [
+      { name: 'EMT_COL_CODE', slotName: 'Code', sorting: { keySelector: 'Code' }, filter: { type: 'Multiselect', keySelector: 'Code' } },
+      { name: 'EMT_COL_TITLE', slotName: 'Title', sorting: { keySelector: 'Title' }, filter: { type: 'Multiselect', keySelector: 'Title' } },
+      { name: 'EMT_COL_GROUP', slotName: 'Group', sorting: { keySelector: 'Group' }, filter: { type: 'Multiselect', keySelector: 'Group' } },
+      {
+        name: 'EMT_COL_SEVERITY',
+        slotName: 'DefaultSeverity',
+        sorting: { keySelector: 'DefaultSeverity' },
+        filter: { type: 'Multiselect', keySelector: 'DefaultSeverity', labelValues: SEVERITIES.map((value) => ({ value, label: translate('EMT_SEVERITY_' + value) })) },
+      },
+      { name: 'EMT_COL_ACTIVE', slotName: 'Active', sorting: { keySelector: 'Active' }, filter: { type: 'Multiselect', keySelector: 'Active', labelValues: yesNo() } },
+      { name: 'EMT_COL_IS_USED', slotName: 'IsUsed', sorting: { keySelector: 'IsUsed' }, filter: { type: 'Multiselect', keySelector: 'IsUsed', labelValues: yesNo() } },
+      { name: '', slotName: 'Button_Column', sorting: false },
+    ] as Column[],
+);
 
 const defaultSorting: DefaultSorting = {
   columnName: 'EMT_COL_CODE',
@@ -73,7 +87,7 @@ function cellText(keySelector: string, objectId: string): string {
     return '-';
   }
   if (keySelector === 'Active' || keySelector === 'IsUsed') {
-    return value === true ? translate('EMT_YES') : translate('EMT_NO');
+    return value === true || value === 'true' ? translate('EMT_YES') : translate('EMT_NO');
   }
   if (keySelector === 'DefaultSeverity') {
     return translate('EMT_SEVERITY_' + String(value));

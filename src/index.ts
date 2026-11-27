@@ -4,9 +4,11 @@ import { registerOverlayComponent } from '@fsdev/overlay';
 import { objectStore } from './stores/objectStore';
 import { ADAPTIVE_WINDOW, COMPONENT, EMT_PERMISSIONS, MENU, STORE_KEY } from './constants';
 import { Utilities } from './utils/translations';
+import { openWindowTrigger } from './utils/windows';
 
 import { type ModuleConfig } from './types';
 import ReportPage from './components/ReportPage.vue';
+import ReportWindow from './components/ReportWindow.vue';
 import ErrorListPage from './components/ErrorListPage.vue';
 import ErrorDetail from './components/ErrorDetail.vue';
 import CatalogPage from './components/CatalogPage.vue';
@@ -38,6 +40,24 @@ export const initialize: Initialize = (api) => {
   ConfigStore.addComponent({ id: COMPONENT.ERROR_DETAIL, component: ErrorDetail });
   ConfigStore.addComponent({ id: COMPONENT.CATALOG, component: CatalogPage });
   ConfigStore.addComponent({ id: COMPONENT.CODE_EDITOR, component: ErrorCodeEditor });
+  ConfigStore.addComponent({ id: COMPONENT.REPORT_WINDOW, component: ReportWindow });
+
+  // "Report error" on every screen: the tiles open in a window next to the current screen, so a reporter does not have to leave what they are doing.
+  ConfigStore.addAdaptiveWindow({
+    availableButtons: {
+      back: false,
+      close: true,
+      fullscreen: true,
+    },
+    componentId: COMPONENT.REPORT_WINDOW,
+    id: ADAPTIVE_WINDOW.REPORT,
+  });
+
+  ConfigStore.addSystemTrayEntry({
+    mainMenuEntry: { id: MENU.REPORT_TRAY, name: 'EMT_REPORT_ERROR', icon: 'icon-warning', priority: 1 },
+    access: { moduleID: EMT_PERMISSIONS.MODULE_ID, scopeID: EMT_PERMISSIONS.SCOPE_ID, permissionField: EMT_PERMISSIONS.PERMISSIONS.REPORT_ERRORS },
+    trigger: openWindowTrigger(ADAPTIVE_WINDOW.REPORT, 'large'),
+  });
 
   ConfigStore.addAdaptiveWindow({
     availableButtons: {
